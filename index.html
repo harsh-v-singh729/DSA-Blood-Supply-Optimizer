@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BloodNet — Supply Network Optimizer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/lucide.min.js"></script>
+<style>
+:root {
+  --red:        #c0152a;
+  --red-dark:   #8b0e1d;
+  --red-light:  #f8d7da;
+  --red-soft:   #fce8ea;
+  --bg:         #f4f5f7;
+  --sidebar:    #1a0408;
+  --sidebar2:   #2c0b12;
+  --white:      #ffffff;
+  --gray-1:     #f0f1f3;
+  --gray-2:     #e2e4e8;
+  --gray-3:     #b0b5bf;
+  --gray-4:     #6b7280;
+  --text:       #1a1d23;
+  --text-sub:   #6b7280;
+  --success:    #16a34a;
+  --warning:    #d97706;
+  --radius:     12px;
+  --shadow:     0 2px 12px rgba(0,0,0,.08);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  width:230px;min-width:230px;background:var(--sidebar);
+  display:flex;flex-direction:column;height:100vh;
+  position:fixed;left:0;top:0;z-index:100;
+  box-shadow:4px 0 20px rgba(0,0,0,.3);
+}
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.06);}
+.sb-logo .brand{display:flex;align-items:center;gap:10px;}
+.sb-logo .drop-icon{width:34px;height:34px;background:var(--red);border-radius:50% 50% 50% 10%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sb-logo .drop-icon svg{width:18px;height:18px;fill:#fff;stroke:none;}
+.sb-logo h1{font-family:'Crimson Pro',serif;font-size:1.35rem;font-weight:600;color:#fff;letter-spacing:.3px;line-height:1.1;}
+.sb-logo p{font-size:.68rem;color:var(--gray-3);margin-top:2px;letter-spacing:.6px;text-transform:uppercase;}
+.sb-nav{flex:1;padding:14px 10px;overflow-y:auto;}
+.sb-nav::-webkit-scrollbar{width:0;}
+.sb-group{font-size:.62rem;color:rgba(255,255,255,.28);letter-spacing:1px;text-transform:uppercase;padding:12px 10px 6px;font-weight:600;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;cursor:pointer;color:rgba(255,255,255,.6);font-size:.83rem;font-weight:500;transition:all .18s;margin-bottom:2px;position:relative;}
+.sb-item svg{width:17px;height:17px;flex-shrink:0;opacity:.7;transition:opacity .18s;}
+.sb-item:hover{background:rgba(255,255,255,.07);color:#fff;}
+.sb-item:hover svg{opacity:1;}
+.sb-item.active{background:linear-gradient(135deg,var(--red) 0%,var(--red-dark) 100%);color:#fff;box-shadow:0 4px 14px rgba(192,21,42,.4);}
+.sb-item.active svg{opacity:1;}
+.sb-footer{padding:14px;border-top:1px solid rgba(255,255,255,.06);}
+.sb-footer p{font-size:.68rem;color:rgba(255,255,255,.25);text-align:center;line-height:1.5;}
+
+/* ── MAIN ── */
+#main{margin-left:230px;flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+.topbar{background:var(--white);border-bottom:1px solid var(--gray-2);padding:0 28px;height:62px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 1px 6px rgba(0,0,0,.05);}
+.topbar h2{font-family:'Crimson Pro',serif;font-size:1.4rem;font-weight:600;color:var(--text);}
+.topbar .tb-right{display:flex;align-items:center;gap:14px;}
+.badge-red{background:var(--red-soft);color:var(--red);font-size:.72rem;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid var(--red-light);}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--red-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem;font-weight:700;cursor:pointer;}
+
+/* ── CONTENT ── */
+.content{flex:1;overflow-y:auto;padding:24px 28px;}
+.content::-webkit-scrollbar{width:5px;}
+.content::-webkit-scrollbar-thumb{background:var(--gray-2);border-radius:4px;}
+
+/* ── PAGE ── */
+.page{display:none;animation:fadeIn .25s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CARDS ── */
+.card{background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border:1px solid var(--gray-2);}
+.card-title{font-size:.78rem;font-weight:600;color:var(--text-sub);letter-spacing:.6px;text-transform:uppercase;margin-bottom:4px;}
+.card-val{font-size:2rem;font-weight:700;color:var(--text);}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.stat-card{display:flex;align-items:center;gap:16px;padding:18px 20px;}
+.stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.stat-icon svg{width:22px;height:22px;}
+.si-red{background:var(--red-soft);}
+.si-red svg{stroke:var(--red);}
+.si-green{background:#dcfce7;}
+.si-green svg{stroke:var(--success);}
+.si-blue{background:#dbeafe;}
+.si-blue svg{stroke:#2563eb;}
+.si-amber{background:#fef3c7;}
+.si-amber svg{stroke:var(--warning);}
+
+/* ── TABLES ── */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:.83rem;}
+thead tr{background:var(--gray-1);}
+th{padding:10px 14px;text-align:left;font-size:.72rem;font-weight:600;color:var(--text-sub);letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--gray-2);}
+td{padding:11px 14px;border-bottom:1px solid var(--gray-1);color:var(--text);}
+tbody tr:hover{background:var(--gray-1);}
+tbody tr:last-child td{border-bottom:none;}
+.pill{display:inline-flex;align-items:center;font-size:.72rem;font-weight:600;padding:3px 9px;border-radius:20px;}
+.pill-red{background:var(--red-soft);color:var(--red);}
+.pill-green{background:#dcfce7;color:var(--success);}
+.pill-blue{background:#dbeafe;color:#2563eb;}
+.pill-amber{background:#fef3c7;color:var(--warning);}
+.pill-gray{background:var(--gray-1);color:var(--gray-4);}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:9px;font-size:.82rem;font-weight:600;cursor:pointer;border:none;transition:all .18s;font-family:inherit;}
+.btn-red{background:var(--red);color:#fff;box-shadow:0 3px 10px rgba(192,21,42,.3);}
+.btn-red:hover{background:var(--red-dark);}
+.btn-outline{background:#fff;color:var(--text);border:1.5px solid var(--gray-2);}
+.btn-outline:hover{border-color:var(--red);color:var(--red);}
+.btn-ghost{background:transparent;color:var(--text-sub);padding:6px 10px;}
+.btn-ghost:hover{color:var(--red);}
+.btn-success{background:#16a34a;color:#fff;}
+.btn-success:hover{background:#15803d;}
+.btn svg{width:15px;height:15px;}
+
+/* ── FORM ── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group label{font-size:.76rem;font-weight:600;color:var(--text-sub);}
+.form-group input,.form-group select,.form-group textarea{
+  padding:9px 12px;border:1.5px solid var(--gray-2);border-radius:8px;
+  font-size:.83rem;font-family:inherit;color:var(--text);background:var(--white);
+  transition:border .15s;outline:none;
+}
+.form-group input:focus,.form-group select:focus{border-color:var(--red);}
+.search-bar{position:relative;margin-bottom:16px;}
+.search-bar input{width:100%;padding:9px 12px 9px 36px;border:1.5px solid var(--gray-2);border-radius:9px;font-size:.83rem;font-family:inherit;outline:none;transition:border .15s;}
+.search-bar input:focus{border-color:var(--red);}
+.search-bar svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;stroke:var(--gray-3);}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.section-head h3{font-size:1rem;font-weight:700;}
+
+/* ── MODAL ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:16px;padding:26px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:modalIn .2s ease;}
+@keyframes modalIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.modal-head h3{font-size:1.05rem;font-weight:700;}
+.modal-close{width:30px;height:30px;border-radius:50%;border:none;background:var(--gray-1);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.modal-close svg{width:15px;height:15px;stroke:var(--text-sub);}
+
+/* ── NETWORK GRAPH ── */
+#networkCanvas{width:100%;height:320px;border-radius:12px;background:var(--gray-1);}
+
+/* ── NODE CARDS ── */
+.node-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+.node-card{background:#fff;border-radius:12px;padding:16px;border:1.5px solid var(--gray-2);transition:all .2s;position:relative;}
+.node-card:hover{border-color:var(--red);box-shadow:0 4px 14px rgba(192,21,42,.1);}
+.node-card .nc-type{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;}
+.node-card .nc-name{font-size:.92rem;font-weight:700;margin-bottom:10px;}
+.node-card .nc-info{display:flex;flex-direction:column;gap:5px;}
+.nc-row{display:flex;justify-content:space-between;font-size:.78rem;}
+.nc-row span:first-child{color:var(--text-sub);}
+.nc-actions{display:flex;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--gray-1);}
+
+/* ── ROUTE ── */
+.route-path{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0;}
+.route-node{background:var(--red-soft);color:var(--red);border:1px solid var(--red-light);padding:5px 14px;border-radius:20px;font-size:.8rem;font-weight:600;}
+.route-arrow{color:var(--red);font-size:1.1rem;}
+.route-result{background:var(--gray-1);border-radius:12px;padding:18px;margin-top:14px;}
+
+/* ── ALLOCATION LOGS ── */
+.alloc-item{background:#fff;border:1.5px solid var(--gray-2);border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;transition:all .2s;}
+.alloc-item:hover{border-color:var(--red);box-shadow:0 3px 12px rgba(192,21,42,.08);}
+.alloc-flow{display:flex;align-items:center;gap:10px;font-size:.88rem;font-weight:600;}
+.alloc-flow .node-bb{color:#2563eb;font-weight:700;}
+.alloc-flow .node-h{color:var(--red);font-weight:700;}
+.alloc-meta{display:flex;gap:16px;font-size:.78rem;color:var(--text-sub);}
+.alloc-meta span{display:flex;align-items:center;gap:4px;}
+
+/* ── ZONES ── */
+.zone-card{border:1.5px solid var(--gray-2);border-radius:12px;overflow:hidden;margin-bottom:12px;}
+.zone-head{background:var(--gray-1);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.zone-head h4{font-size:.9rem;font-weight:700;}
+.zone-body{padding:14px 18px;display:none;border-top:1px solid var(--gray-2);}
+.zone-body.open{display:block;}
+.zone-node{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--gray-1);font-size:.83rem;}
+.zone-node:last-child{border-bottom:none;}
+
+/* ── FILE MGMT ── */
+.file-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.file-card{background:#fff;border:1.5px solid var(--gray-2);border-radius:12px;padding:22px;text-align:center;transition:all .2s;}
+.file-card:hover{border-color:var(--red);}
+.file-card .fc-icon{width:52px;height:52px;border-radius:14px;background:var(--red-soft);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
+.file-card .fc-icon svg{width:24px;height:24px;stroke:var(--red);}
+.file-card h4{font-size:.9rem;font-weight:700;margin-bottom:6px;}
+.file-card p{font-size:.77rem;color:var(--text-sub);margin-bottom:16px;}
+.file-status{font-size:.75rem;margin-top:10px;padding:5px 10px;border-radius:6px;display:none;}
+
+/* ── ROAD TABLE ── */
+.road-actions{display:flex;gap:6px;}
+
+/* ── BFS/DFS ── */
+.trav-result{background:var(--gray-1);border-radius:10px;padding:14px;margin-top:12px;font-size:.84rem;line-height:1.8;}
+
+/* Illustration SVG helpers */
+.illus{opacity:.08;position:absolute;pointer-events:none;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sb-logo">
+    <div class="brand">
+      <div class="drop-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C12 2 4 10 4 15a8 8 0 0016 0C20 10 12 2 12 2z"/></svg>
+      </div>
+      <div>
+        <h1>BloodNet</h1>
+        <p>Network Optimizer</p>
+      </div>
+    </div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-group">Overview</div>
+    <div class="sb-item active" data-page="home">
+      <i data-lucide="layout-dashboard"></i> Dashboard Home
+    </div>
+    <div class="sb-group">Operations</div>
+    <div class="sb-item" data-page="donors">
+      <i data-lucide="users"></i> Donor Management
+    </div>
+    <div class="sb-item" data-page="patients">
+      <i data-lucide="heart-pulse"></i> Patient Requests
+    </div>
+    <div class="sb-group">Network</div>
+    <div class="sb-item" data-page="network">
+      <i data-lucide="git-fork"></i> Hospital & Blood Bank
+    </div>
+    <div class="sb-item" data-page="roads">
+      <i data-lucide="route"></i> Road Management
+    </div>
+    <div class="sb-item" data-page="route">
+      <i data-lucide="navigation"></i> Route Optimization
+    </div>
+    <div class="sb-group">Allocation</div>
+    <div class="sb-item" data-page="allocation">
+      <i data-lucide="zap"></i> Supply Allocation
+    </div>
+    <div class="sb-item" data-page="zones">
+      <i data-lucide="layers"></i> Supply Zones
+    </div>
+    <div class="sb-group">System</div>
+    <div class="sb-item" data-page="files">
+      <i data-lucide="folder-open"></i> File Management
+    </div>
+  </div>
+  <div class="sb-footer">
+    <p>BloodNet v2.0 &nbsp;•&nbsp; DSA Engine<br>© 2025 MedSupply Systems</p>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="topbar">
+    <h2 id="pageTitle">Dashboard Home</h2>
+    <div class="tb-right">
+      <span class="badge-red" id="tb-badge">● System Active</span>
+      <div class="avatar" title="Admin">A</div>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- ════════ HOME ════════ -->
+    <div class="page active" id="page-home">
+      <div class="grid-4">
+        <div class="card stat-card">
+          <div class="stat-icon si-red"><i data-lucide="users"></i></div>
+          <div><div class="card-title">Total Donors</div><div class="card-val" id="stat-donors">6</div></div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon si-green"><i data-lucide="heart-pulse"></i></div>
+          <div><div class="card-title">Active Patients</div><div class="card-val" id="stat-patients">4</div></div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon si-blue"><i data-lucide="building-2"></i></div>
+          <div><div class="card-title">Hospitals</div><div class="card-val" id="stat-hospitals">5</div></div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon si-amber"><i data-lucide="droplets"></i></div>
+          <div><div class="card-title">Blood Banks</div><div class="card-val" id="stat-banks">4</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-head">
+          <h3>Network Overview — Blood Supply Graph</h3>
+          <span class="pill pill-green">● Live</span>
+        </div>
+        <canvas id="networkCanvas"></canvas>
+        <div style="margin-top:12px;display:flex;gap:16px;font-size:.78rem;color:var(--text-sub);">
+          <span>⬤ <span style="color:#2563eb">Blood Banks</span></span>
+          <span>⬤ <span style="color:var(--red)">Hospitals</span></span>
+          <span>─── Routes (Dijkstra edges)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ DONORS ════════ -->
+    <div class="page" id="page-donors">
+      <div class="section-head">
+        <h3>Donor Management</h3>
+        <button class="btn btn-red" onclick="openModal('donorModal')"><i data-lucide="plus"></i> Add Donor</button>
+      </div>
+      <div class="card">
+        <div class="search-bar"><i data-lucide="search"></i><input type="text" id="donorSearch" placeholder="Search by name or blood group…" oninput="renderDonorTable()"></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Blood Group</th><th>Age</th><th>Units</th><th>Phone</th><th>City</th><th>Actions</th></tr></thead>
+            <tbody id="donorTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ PATIENTS ════════ -->
+    <div class="page" id="page-patients">
+      <div class="section-head">
+        <h3>Patient Requests</h3>
+        <button class="btn btn-red" onclick="openModal('patientModal')"><i data-lucide="plus"></i> Add Request</button>
+      </div>
+      <div class="card">
+        <div class="search-bar"><i data-lucide="search"></i><input type="text" id="patientSearch" placeholder="Search patient or blood group…" oninput="renderPatientTable()"></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Blood Group</th><th>Units Needed</th><th>Phone</th><th>City</th><th>Hospital</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="patientTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ NETWORK ════════ -->
+    <div class="page" id="page-network">
+      <div class="section-head">
+        <h3>Hospital & Blood Bank Network</h3>
+        <button class="btn btn-red" onclick="openModal('nodeModal')"><i data-lucide="plus"></i> Add Node</button>
+      </div>
+      <div class="node-grid" id="nodeGrid"></div>
+    </div>
+
+    <!-- ════════ ROADS ════════ -->
+    <div class="page" id="page-roads">
+      <div class="section-head">
+        <h3>Road Management</h3>
+        <button class="btn btn-red" onclick="openModal('roadModal')"><i data-lucide="plus"></i> Add Road</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Road ID</th><th>Source</th><th>Destination</th><th>Distance (km)</th><th>Actions</th></tr></thead>
+            <tbody id="roadTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ ROUTE OPTIMIZATION ════════ -->
+    <div class="page" id="page-route">
+      <div class="grid-2" style="margin-bottom:18px;">
+        <div class="card">
+          <h3 style="margin-bottom:14px;font-size:.95rem;">🔴 Dijkstra — Shortest Route Finder</h3>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>Source Blood Bank</label>
+            <select id="dijkSrc"></select>
+          </div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label>Destination Hospital</label>
+            <select id="dijkDst"></select>
+          </div>
+          <button class="btn btn-red" style="width:100%" onclick="runDijkstra()"><i data-lucide="navigation"></i> Find Shortest Route</button>
+          <div id="dijkResult" style="display:none;" class="route-result">
+            <div class="card-title">Route Path</div>
+            <div class="route-path" id="dijkPath"></div>
+            <div style="display:flex;gap:20px;margin-top:8px;">
+              <div><div class="card-title">Total Distance</div><div style="font-size:1.4rem;font-weight:700;color:var(--red)" id="dijkDist"></div></div>
+              <div><div class="card-title">Nodes Traversed</div><div style="font-size:1.4rem;font-weight:700;color:var(--red)" id="dijkNodes"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:14px;font-size:.95rem;">🔵 BFS — Reachable Nodes (Nearby)</h3>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>Start Node</label>
+            <select id="bfsSrc"></select>
+          </div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label>Max Hops</label>
+            <select id="bfsHops"><option>1</option><option selected>2</option><option>3</option><option>4</option></select>
+          </div>
+          <button class="btn btn-red" style="width:100%" onclick="runBFS()"><i data-lucide="git-merge"></i> Run BFS</button>
+          <div id="bfsResult" class="trav-result" style="display:none;margin-top:14px;"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:14px;font-size:.95rem;">🟢 DFS — Reachability Check</h3>
+        <div style="display:flex;gap:12px;align-items:flex-end;">
+          <div class="form-group" style="flex:1">
+            <label>From Node</label>
+            <select id="dfsSrc"></select>
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>To Node</label>
+            <select id="dfsDst"></select>
+          </div>
+          <button class="btn btn-red" onclick="runDFS()"><i data-lucide="search"></i> Check</button>
+        </div>
+        <div id="dfsResult" class="trav-result" style="display:none;margin-top:14px;"></div>
+      </div>
+    </div>
+
+    <!-- ════════ ALLOCATION ════════ -->
+    <div class="page" id="page-allocation">
+      <div class="section-head">
+        <h3>Greedy Supply Allocation</h3>
+        <button class="btn btn-red" onclick="runAllocation()"><i data-lucide="zap"></i> Run Allocation</button>
+      </div>
+      <div class="card" style="margin-bottom:16px;">
+        <p style="font-size:.83rem;color:var(--text-sub);">The greedy algorithm matches each hospital's demand to the nearest blood bank with sufficient stock of the matching blood group.</p>
+      </div>
+      <div id="allocLogs"></div>
+    </div>
+
+    <!-- ════════ ZONES ════════ -->
+    <div class="page" id="page-zones">
+      <div class="section-head">
+        <h3>Supply Zones — DSU (Disjoint Set Union)</h3>
+        <button class="btn btn-outline" onclick="computeZones()"><i data-lucide="refresh-cw"></i> Recompute Zones</button>
+      </div>
+      <div class="card" style="margin-bottom:16px;">
+        <p style="font-size:.83rem;color:var(--text-sub);">Zones are computed using DSU on road edges. Nodes connected via roads belong to the same supply zone.</p>
+      </div>
+      <div id="zonesContainer"></div>
+    </div>
+
+    <!-- ════════ FILES ════════ -->
+    <div class="page" id="page-files">
+      <div class="section-head"><h3>File Management</h3></div>
+      <div class="file-grid">
+        <div class="file-card">
+          <div class="fc-icon"><i data-lucide="upload"></i></div>
+          <h4>Load People Data</h4>
+          <p>Import donors and patients from CSV file</p>
+          <label class="btn btn-red" style="cursor:pointer;">
+            <i data-lucide="folder-open"></i> Choose File
+            <input type="file" accept=".csv" style="display:none" onchange="loadPeopleCSV(event)">
+          </label>
+          <div class="file-status" id="fs-people"></div>
+        </div>
+        <div class="file-card">
+          <div class="fc-icon"><i data-lucide="upload"></i></div>
+          <h4>Load Hospital Data</h4>
+          <p>Import hospitals and blood banks from CSV file</p>
+          <label class="btn btn-red" style="cursor:pointer;">
+            <i data-lucide="folder-open"></i> Choose File
+            <input type="file" accept=".csv" style="display:none" onchange="loadHospitalCSV(event)">
+          </label>
+          <div class="file-status" id="fs-hospitals"></div>
+        </div>
+        <div class="file-card">
+          <div class="fc-icon"><i data-lucide="download"></i></div>
+          <h4>Save People Data</h4>
+          <p>Export current donors and patients as CSV</p>
+          <button class="btn btn-success" onclick="savePeopleCSV()"><i data-lucide="download"></i> Download CSV</button>
+          <div class="file-status" id="fs-save-people"></div>
+        </div>
+        <div class="file-card">
+          <div class="fc-icon"><i data-lucide="download"></i></div>
+          <h4>Save Hospital Data</h4>
+          <p>Export current hospital & blood bank data as CSV</p>
+          <button class="btn btn-success" onclick="saveHospitalCSV()"><i data-lucide="download"></i> Download CSV</button>
+          <div class="file-status" id="fs-save-hospitals"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ════ MODALS ════ -->
+<!-- Donor Modal -->
+<div class="overlay" id="donorModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="donorModalTitle">Add New Donor</h3>
+      <button class="modal-close" onclick="closeModal('donorModal')"><i data-lucide="x"></i></button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Full Name</label><input id="dn-name" placeholder="e.g. Arjun Sharma"></div>
+      <div class="form-group"><label>Blood Group</label>
+        <select id="dn-blood"><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Age</label><input id="dn-age" type="number" min="18" max="65" placeholder="25"></div>
+      <div class="form-group"><label>Units Donated</label><input id="dn-units" type="number" min="1" placeholder="2"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Phone</label><input id="dn-phone" placeholder="9876543210"></div>
+      <div class="form-group"><label>City</label><input id="dn-city" placeholder="Jamshedpur"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-red" style="flex:1" onclick="saveDonor()"><i data-lucide="check"></i> Save Donor</button>
+      <button class="btn btn-outline" onclick="closeModal('donorModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Patient Modal -->
+<div class="overlay" id="patientModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="patientModalTitle">Add Patient Request</h3>
+      <button class="modal-close" onclick="closeModal('patientModal')"><i data-lucide="x"></i></button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Patient Name</label><input id="pt-name" placeholder="e.g. Sneha Gupta"></div>
+      <div class="form-group"><label>Blood Group</label>
+        <select id="pt-blood"><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Units Needed</label><input id="pt-units" type="number" min="1" placeholder="2"></div>
+      <div class="form-group"><label>Phone</label><input id="pt-phone" placeholder="9876543210"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>City</label><input id="pt-city" placeholder="Ranchi"></div>
+      <div class="form-group"><label>Assigned Hospital</label><select id="pt-hospital"></select></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-red" style="flex:1" onclick="savePatient()"><i data-lucide="check"></i> Enqueue Patient</button>
+      <button class="btn btn-outline" onclick="closeModal('patientModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Node Modal -->
+<div class="overlay" id="nodeModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="nodeModalTitle">Add Node</h3>
+      <button class="modal-close" onclick="closeModal('nodeModal')"><i data-lucide="x"></i></button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Name</label><input id="nd-name" placeholder="e.g. City Blood Bank"></div>
+      <div class="form-group"><label>Type</label>
+        <select id="nd-type"><option value="bloodbank">Blood Bank</option><option value="hospital">Hospital</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Blood Group</label>
+        <select id="nd-blood"><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select>
+      </div>
+      <div class="form-group"><label>Stock</label><input id="nd-stock" type="number" placeholder="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Demand</label><input id="nd-demand" type="number" placeholder="0"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-red" style="flex:1" onclick="saveNode()"><i data-lucide="check"></i> Save Node</button>
+      <button class="btn btn-outline" onclick="closeModal('nodeModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Road Modal -->
+<div class="overlay" id="roadModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="roadModalTitle">Add Road</h3>
+      <button class="modal-close" onclick="closeModal('roadModal')"><i data-lucide="x"></i></button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Source Node</label><select id="rd-src"></select></div>
+      <div class="form-group"><label>Destination Node</label><select id="rd-dst"></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Distance (km)</label><input id="rd-dist" type="number" min="1" placeholder="15"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-red" style="flex:1" onclick="saveRoad()"><i data-lucide="check"></i> Save Road</button>
+      <button class="btn btn-outline" onclick="closeModal('roadModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  DATA STORE
+// ═══════════════════════════════════════════════════════
+let donors = [
+  {id:1,name:"Harsh",bloodGroup:"A+",age:28,units:5,phone:"9876543210",city:"Jamshedpur"},
+  {id:3,name:"Priya",bloodGroup:"B+",age:24,units:4,phone:"9876543212",city:"Dhanbad"},
+  {id:4,name:"Arjun",bloodGroup:"O+",age:32,units:6,phone:"9876543213",city:"Jamshedpur"},
+  {id:6,name:"Vikram",bloodGroup:"AB+",age:29,units:3,phone:"9876543215",city:"Patna"},
+  {id:8,name:"Ravi",bloodGroup:"O-",age:35,units:5,phone:"9876543217",city:"Jamshedpur"},
+  {id:10,name:"Suresh",bloodGroup:"A-",age:41,units:3,phone:"9876543219",city:"Bokaro"},
+];
+
+let patients = [
+  {id:2,name:"Rahul",bloodGroup:"O+",units:3,phone:"9876543211",city:"Ranchi",hospital:"Max Hospital",status:"Waiting"},
+  {id:5,name:"Sneha",bloodGroup:"A+",units:2,phone:"9876543214",city:"Bokaro",hospital:"Apollo Hospitals Noida",status:"Allocated"},
+  {id:7,name:"Ananya",bloodGroup:"B+",units:4,phone:"9876543216",city:"Ranchi",hospital:"Fortis Hospital Noida",status:"Waiting"},
+  {id:9,name:"Meena",bloodGroup:"AB+",units:1,phone:"9876543218",city:"Dhanbad",hospital:"Yatharth Super Speciality Hospital",status:"Allocated"},
+];
+
+let nodes = [
+  {id:0,name:"Jeevan Dhara Blood Bank",type:"bloodbank",bloodGroup:"A+",stock:50,demand:0},
+  {id:1,name:"Raktdaan Seva Kendra",type:"bloodbank",bloodGroup:"B+",stock:30,demand:0},
+  {id:2,name:"Sanjeevani Blood Bank",type:"bloodbank",bloodGroup:"O+",stock:40,demand:0},
+  {id:3,name:"Jeevan Jyoti Blood Bank",type:"bloodbank",bloodGroup:"AB+",stock:20,demand:0},
+  {id:4,name:"Apollo Hospitals Noida",type:"hospital",bloodGroup:"A+",stock:0,demand:15},
+  {id:5,name:"Fortis Hospital Noida",type:"hospital",bloodGroup:"B+",stock:0,demand:10},
+  {id:6,name:"Max Hospital",type:"hospital",bloodGroup:"O+",stock:0,demand:20},
+  {id:7,name:"Yatharth Super Speciality Hospital",type:"hospital",bloodGroup:"AB+",stock:0,demand:8},
+  {id:8,name:"Jaypee Hospital",type:"hospital",bloodGroup:"A+",stock:0,demand:12},
+];
+
+let roads = [
+  {id:1,src:0,dst:4,dist:12},
+  {id:2,src:0,dst:8,dist:18},
+  {id:3,src:1,dst:5,dist:9},
+  {id:4,src:1,dst:7,dist:22},
+  {id:5,src:2,dst:6,dist:7},
+  {id:6,src:2,dst:4,dist:25},
+  {id:7,src:3,dst:7,dist:11},
+  {id:8,src:3,dst:5,dist:30},
+  {id:9,src:0,dst:1,dist:15},
+  {id:10,src:2,dst:3,dist:20},
+];
+
+let nextDonorId = 11, nextPatientId = 11, nextNodeId = 9, nextRoadId = 11;
+let editDonorId = null, editPatientId = null, editNodeId = null;
+let allocDone = false;
+
+// ═══════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════
+const pageTitles = {
+  home:"Dashboard Home", donors:"Donor Management", patients:"Patient Requests",
+  network:"Hospital & Blood Bank Network", roads:"Road Management",
+  route:"Route Optimization", allocation:"Supply Allocation",
+  zones:"Supply Zones", files:"File Management"
+};
+
+document.querySelectorAll('.sb-item').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.sb-item').forEach(x => x.classList.remove('active'));
+    el.classList.add('active');
+    const p = el.dataset.page;
+    document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
+    document.getElementById('page-' + p).classList.add('active');
+    document.getElementById('pageTitle').textContent = pageTitles[p];
+    onPageEnter(p);
+  });
+});
+
+function onPageEnter(p) {
+  if(p==='home') drawNetwork();
+  if(p==='donors') renderDonorTable();
+  if(p==='patients') { populateHospitalSelect(); renderPatientTable(); }
+  if(p==='network') renderNodeGrid();
+  if(p==='roads') { populateRoadSelects(); renderRoadTable(); }
+  if(p==='route') populateRouteSelects();
+  if(p==='allocation') { allocDone=false; renderAllocationLogs(); }
+  if(p==='zones') computeZones();
+  updateStats();
+}
+
+// ═══════════════════════════════════════════════════════
+//  STATS
+// ═══════════════════════════════════════════════════════
+function updateStats() {
+  document.getElementById('stat-donors').textContent = donors.length;
+  document.getElementById('stat-patients').textContent = patients.length;
+  document.getElementById('stat-hospitals').textContent = nodes.filter(n=>n.type==='hospital').length;
+  document.getElementById('stat-banks').textContent = nodes.filter(n=>n.type==='bloodbank').length;
+}
+
+// ═══════════════════════════════════════════════════════
+//  NETWORK CANVAS
+// ═══════════════════════════════════════════════════════
+function drawNetwork() {
+  const canvas = document.getElementById('networkCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth, H = 320;
+  canvas.width = W; canvas.height = H;
+  ctx.clearRect(0,0,W,H);
+
+  // Layout positions
+  const banks = nodes.filter(n=>n.type==='bloodbank');
+  const hosps = nodes.filter(n=>n.type==='hospital');
+  const pos = {};
+
+  banks.forEach((n,i) => {
+    pos[n.id] = { x: 80 + (i/(banks.length-1||1))*(W*0.35), y: 80 + Math.sin(i*1.3)*40 };
+  });
+  hosps.forEach((n,i) => {
+    pos[n.id] = { x: W*0.55 + (i/(hosps.length-1||1))*(W*0.38), y: 60 + (i/(hosps.length-1||1))*(H-100) };
+  });
+
+  // Draw edges
+  roads.forEach(r => {
+    const a = pos[r.src], b = pos[r.dst];
+    if(!a||!b) return;
+    ctx.beginPath();
+    ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
+    ctx.strokeStyle='rgba(192,21,42,0.2)'; ctx.lineWidth=1.5;
+    ctx.setLineDash([5,4]); ctx.stroke(); ctx.setLineDash([]);
+    // Distance label
+    const mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
+    ctx.fillStyle='#b0b5bf'; ctx.font='10px DM Sans';
+    ctx.fillText(r.dist+'km', mx, my-3);
+  });
+
+  // Draw nodes
+  nodes.forEach(n => {
+    const p = pos[n.id]; if(!p) return;
+    const isBank = n.type==='bloodbank';
+    const color = isBank ? '#2563eb' : '#c0152a';
+    const bg = isBank ? '#dbeafe' : '#fce8ea';
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 22, 0, Math.PI*2);
+    ctx.fillStyle = bg; ctx.fill();
+    ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.stroke();
+
+    ctx.fillStyle = color;
+    ctx.font = 'bold 11px DM Sans'; ctx.textAlign = 'center';
+    ctx.fillText(n.bloodGroup, p.x, p.y+4);
+
+    ctx.fillStyle = '#1a1d23';
+    ctx.font = '10px DM Sans'; ctx.textAlign = 'center';
+    const short = n.name.split(' ').slice(0,2).join(' ');
+    ctx.fillText(short, p.x, p.y+36);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  DONOR TABLE
+// ═══════════════════════════════════════════════════════
+function renderDonorTable() {
+  const q = document.getElementById('donorSearch').value.toLowerCase();
+  const tb = document.getElementById('donorTableBody');
+  tb.innerHTML = donors
+    .filter(d => d.name.toLowerCase().includes(q) || d.bloodGroup.toLowerCase().includes(q))
+    .map(d => `<tr>
+      <td>#${d.id}</td><td>${d.name}</td>
+      <td><span class="pill pill-red">${d.bloodGroup}</span></td>
+      <td>${d.age}</td><td>${d.units}</td><td>${d.phone}</td><td>${d.city}</td>
+      <td>
+        <button class="btn btn-ghost" onclick="editDonor(${d.id})" title="Edit"><i data-lucide="pencil"></i></button>
+        <button class="btn btn-ghost" onclick="deleteDonor(${d.id})" title="Delete"><i data-lucide="trash-2"></i></button>
+      </td>
+    </tr>`).join('');
+  lucide.createIcons();
+}
+
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  editDonorId=null; editPatientId=null; editNodeId=null;
+}
+document.querySelectorAll('.overlay').forEach(ov => {
+  ov.addEventListener('click', e => { if(e.target===ov) ov.classList.remove('open'); });
+});
+
+function editDonor(id) {
+  const d = donors.find(x=>x.id===id);
+  editDonorId = id;
+  document.getElementById('donorModalTitle').textContent='Edit Donor';
+  document.getElementById('dn-name').value=d.name;
+  document.getElementById('dn-blood').value=d.bloodGroup;
+  document.getElementById('dn-age').value=d.age;
+  document.getElementById('dn-units').value=d.units;
+  document.getElementById('dn-phone').value=d.phone;
+  document.getElementById('dn-city').value=d.city;
+  openModal('donorModal');
+}
+
+function saveDonor() {
+  const obj = {
+    name: document.getElementById('dn-name').value.trim(),
+    bloodGroup: document.getElementById('dn-blood').value,
+    age: +document.getElementById('dn-age').value,
+    units: +document.getElementById('dn-units').value,
+    phone: document.getElementById('dn-phone').value.trim(),
+    city: document.getElementById('dn-city').value.trim(),
+  };
+  if(!obj.name||!obj.age||!obj.units) return alert('Please fill all fields');
+  if(editDonorId!==null) {
+    const idx=donors.findIndex(x=>x.id===editDonorId);
+    donors[idx]={...donors[idx],...obj};
+  } else {
+    donors.push({id:nextDonorId++,...obj});
+  }
+  closeModal('donorModal');
+  document.getElementById('dn-name').value='';
+  renderDonorTable(); updateStats();
+}
+
+function deleteDonor(id) {
+  if(!confirm('Delete this donor?')) return;
+  donors=donors.filter(x=>x.id!==id);
+  renderDonorTable(); updateStats();
+}
+
+// ═══════════════════════════════════════════════════════
+//  PATIENT TABLE
+// ═══════════════════════════════════════════════════════
+function populateHospitalSelect() {
+  const sel = document.getElementById('pt-hospital');
+  const hosps = nodes.filter(n=>n.type==='hospital');
+  sel.innerHTML = hosps.map(h=>`<option>${h.name}</option>`).join('');
+}
+
+function renderPatientTable() {
+  const q = document.getElementById('patientSearch').value.toLowerCase();
+  const tb = document.getElementById('patientTableBody');
+  tb.innerHTML = patients
+    .filter(p => p.name.toLowerCase().includes(q)||p.bloodGroup.toLowerCase().includes(q))
+    .map(p => `<tr>
+      <td>#${p.id}</td><td>${p.name}</td>
+      <td><span class="pill pill-red">${p.bloodGroup}</span></td>
+      <td>${p.units}</td><td>${p.phone}</td><td>${p.city}</td>
+      <td>${p.hospital}</td>
+      <td><span class="pill ${p.status==='Allocated'?'pill-green':'pill-amber'}">${p.status}</span></td>
+      <td>
+        <button class="btn btn-ghost" onclick="togglePatientStatus(${p.id})" title="Toggle Status"><i data-lucide="refresh-cw"></i></button>
+        <button class="btn btn-ghost" onclick="deletePatient(${p.id})" title="Delete"><i data-lucide="trash-2"></i></button>
+      </td>
+    </tr>`).join('');
+  lucide.createIcons();
+}
+
+function savePatient() {
+  const obj = {
+    name: document.getElementById('pt-name').value.trim(),
+    bloodGroup: document.getElementById('pt-blood').value,
+    units: +document.getElementById('pt-units').value,
+    phone: document.getElementById('pt-phone').value.trim(),
+    city: document.getElementById('pt-city').value.trim(),
+    hospital: document.getElementById('pt-hospital').value,
+    status: 'Waiting',
+  };
+  if(!obj.name||!obj.units) return alert('Please fill all fields');
+  patients.push({id:nextPatientId++,...obj});
+  closeModal('patientModal');
+  renderPatientTable(); updateStats();
+}
+
+function togglePatientStatus(id) {
+  const p=patients.find(x=>x.id===id);
+  p.status = p.status==='Waiting'?'Allocated':'Waiting';
+  renderPatientTable();
+}
+function deletePatient(id) {
+  if(!confirm('Remove patient?')) return;
+  patients=patients.filter(x=>x.id!==id);
+  renderPatientTable(); updateStats();
+}
+
+// ═══════════════════════════════════════════════════════
+//  NODE GRID
+// ═══════════════════════════════════════════════════════
+function renderNodeGrid() {
+  document.getElementById('nodeGrid').innerHTML = nodes.map(n => {
+    const isBank = n.type==='bloodbank';
+    return `<div class="node-card">
+      <div class="nc-type" style="color:${isBank?'#2563eb':'#c0152a'}">${isBank?'🏦 Blood Bank':'🏥 Hospital'}</div>
+      <div class="nc-name">${n.name}</div>
+      <div class="nc-info">
+        <div class="nc-row"><span>Node ID</span><span><b>#${n.id}</b></span></div>
+        <div class="nc-row"><span>Blood Group</span><span><span class="pill pill-red">${n.bloodGroup}</span></span></div>
+        <div class="nc-row"><span>Stock</span><span><b>${n.stock} units</b></span></div>
+        <div class="nc-row"><span>Demand</span><span><b>${n.demand} units</b></span></div>
+      </div>
+      <div class="nc-actions">
+        <button class="btn btn-outline" style="flex:1;font-size:.76rem" onclick="editNode(${n.id})"><i data-lucide="pencil"></i> Edit</button>
+        <button class="btn btn-ghost" onclick="deleteNode(${n.id})"><i data-lucide="trash-2"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function editNode(id) {
+  const n=nodes.find(x=>x.id===id); editNodeId=id;
+  document.getElementById('nodeModalTitle').textContent='Edit Node';
+  document.getElementById('nd-name').value=n.name;
+  document.getElementById('nd-type').value=n.type;
+  document.getElementById('nd-blood').value=n.bloodGroup;
+  document.getElementById('nd-stock').value=n.stock;
+  document.getElementById('nd-demand').value=n.demand;
+  openModal('nodeModal');
+}
+
+function saveNode() {
+  const obj = {
+    name: document.getElementById('nd-name').value.trim(),
+    type: document.getElementById('nd-type').value,
+    bloodGroup: document.getElementById('nd-blood').value,
+    stock: +document.getElementById('nd-stock').value||0,
+    demand: +document.getElementById('nd-demand').value||0,
+  };
+  if(!obj.name) return alert('Name required');
+  if(editNodeId!==null) {
+    const idx=nodes.findIndex(x=>x.id===editNodeId);
+    nodes[idx]={...nodes[idx],...obj};
+  } else {
+    nodes.push({id:nextNodeId++,...obj});
+  }
+  closeModal('nodeModal');
+  renderNodeGrid(); updateStats();
+}
+
+function deleteNode(id) {
+  if(!confirm('Delete this node? Associated roads will also be removed.')) return;
+  nodes=nodes.filter(x=>x.id!==id);
+  roads=roads.filter(r=>r.src!==id&&r.dst!==id);
+  renderNodeGrid(); updateStats();
+}
+
+// ═══════════════════════════════════════════════════════
+//  ROAD TABLE
+// ═══════════════════════════════════════════════════════
+function populateRoadSelects() {
+  ['rd-src','rd-dst'].forEach(id => {
+    const sel=document.getElementById(id);
+    sel.innerHTML=nodes.map(n=>`<option value="${n.id}">${n.name}</option>`).join('');
+  });
+}
+
+function renderRoadTable() {
+  document.getElementById('roadTableBody').innerHTML = roads.map(r => {
+    const s=nodes.find(n=>n.id===r.src), d=nodes.find(n=>n.id===r.dst);
+    return `<tr>
+      <td>#${r.id}</td>
+      <td>${s?s.name:'—'}</td>
+      <td>${d?d.name:'—'}</td>
+      <td><b>${r.dist} km</b></td>
+      <td class="road-actions">
+        <button class="btn btn-ghost" onclick="editRoad(${r.id})"><i data-lucide="pencil"></i></button>
+        <button class="btn btn-ghost" onclick="deleteRoad(${r.id})"><i data-lucide="trash-2"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function saveRoad() {
+  const src=+document.getElementById('rd-src').value;
+  const dst=+document.getElementById('rd-dst').value;
+  const dist=+document.getElementById('rd-dist').value;
+  if(!dist||src===dst) return alert('Invalid road');
+  if(editRoadId!==null) {
+    const r=roads.find(x=>x.id===editRoadId);
+    r.src=src; r.dst=dst; r.dist=dist; editRoadId=null;
+  } else {
+    roads.push({id:nextRoadId++,src,dst,dist});
+  }
+  closeModal('roadModal');
+  renderRoadTable();
+}
+
+let editRoadId=null;
+function editRoad(id) {
+  const r=roads.find(x=>x.id===id); editRoadId=id;
+  populateRoadSelects();
+  document.getElementById('roadModalTitle').textContent='Edit Road';
+  document.getElementById('rd-src').value=r.src;
+  document.getElementById('rd-dst').value=r.dst;
+  document.getElementById('rd-dist').value=r.dist;
+  openModal('roadModal');
+}
+function deleteRoad(id) {
+  if(!confirm('Delete this road?')) return;
+  roads=roads.filter(r=>r.id!==id);
+  renderRoadTable();
+}
+
+// ═══════════════════════════════════════════════════════
+//  ROUTE OPTIMIZATION
+// ═══════════════════════════════════════════════════════
+function populateRouteSelects() {
+  const banks=nodes.filter(n=>n.type==='bloodbank');
+  const hosps=nodes.filter(n=>n.type==='hospital');
+  document.getElementById('dijkSrc').innerHTML=banks.map(n=>`<option value="${n.id}">${n.name}</option>`).join('');
+  document.getElementById('dijkDst').innerHTML=hosps.map(n=>`<option value="${n.id}">${n.name}</option>`).join('');
+  document.getElementById('bfsSrc').innerHTML=nodes.map(n=>`<option value="${n.id}">${n.name}</option>`).join('');
+  document.getElementById('dfsSrc').innerHTML=nodes.map(n=>`<option value="${n.id}">${n.name}</option>`).join('');
+  document.getElementById('dfsDst').innerHTML=nodes.map(n=>`<option value="${n.id}">${n.name}</option>`).join('');
+}
+
+function buildAdj(directed=false) {
+  const adj={};
+  nodes.forEach(n=>adj[n.id]=[]);
+  roads.forEach(r=>{
+    adj[r.src].push({to:r.dst,dist:r.dist});
+    if(!directed) adj[r.dst].push({to:r.src,dist:r.dist});
+  });
+  return adj;
+}
+
+function dijkstra(src, dst) {
+  const adj=buildAdj(false);
+  const dist={}, prev={}, visited=new Set();
+  nodes.forEach(n=>dist[n.id]=Infinity);
+  dist[src]=0;
+  const pq=[[0,src]]; // [dist, node]
+
+  while(pq.length) {
+    pq.sort((a,b)=>a[0]-b[0]);
+    const [d,u]=pq.shift();
+    if(visited.has(u)) continue;
+    visited.add(u);
+    (adj[u]||[]).forEach(({to,dist:w})=>{
+      if(d+w<dist[to]) {
+        dist[to]=d+w; prev[to]=u;
+        pq.push([d+w,to]);
+      }
+    });
+  }
+
+  if(dist[dst]===Infinity) return null;
+  const path=[]; let cur=dst;
+  while(cur!==undefined) { path.unshift(cur); cur=prev[cur]; }
+  return {path, total:dist[dst]};
+}
+
+function runDijkstra() {
+  const src=+document.getElementById('dijkSrc').value;
+  const dst=+document.getElementById('dijkDst').value;
+  const res=dijkstra(src,dst);
+  const el=document.getElementById('dijkResult');
+  el.style.display='block';
+  if(!res) {
+    document.getElementById('dijkPath').innerHTML='<span style="color:var(--text-sub)">No route found</span>';
+    document.getElementById('dijkDist').textContent='—';
+    document.getElementById('dijkNodes').textContent='—';
+    return;
+  }
+  const pathHTML = res.path.map((id,i) => {
+    const n=nodes.find(x=>x.id===id);
+    return (i?'<span class="route-arrow">→</span>':'')+`<span class="route-node">${n?n.name.split(' ')[0]:'?'}</span>`;
+  }).join('');
+  document.getElementById('dijkPath').innerHTML=pathHTML;
+  document.getElementById('dijkDist').textContent=res.total+' km';
+  document.getElementById('dijkNodes').textContent=res.path.length;
+}
+
+function runBFS() {
+  const src=+document.getElementById('bfsSrc').value;
+  const maxHops=+document.getElementById('bfsHops').value;
+  const adj=buildAdj(false);
+  const visited={[src]:0};
+  const queue=[src];
+  while(queue.length) {
+    const u=queue.shift();
+    if(visited[u]>=maxHops) continue;
+    (adj[u]||[]).forEach(({to})=>{
+      if(visited[to]===undefined) { visited[to]=visited[u]+1; queue.push(to); }
+    });
+  }
+  const result=Object.entries(visited).filter(([id])=>+id!==src)
+    .map(([id,hops])=>{const n=nodes.find(x=>x.id===+id); return `<b>${n?n.name:'Node '+id}</b> (${hops} hop${hops>1?'s':''})`;});
+  const el=document.getElementById('bfsResult');
+  el.style.display='block';
+  el.innerHTML=result.length
+    ? '<b>Reachable Nodes:</b><br>' + result.join('<br>')
+    : 'No reachable nodes within '+maxHops+' hop(s).';
+}
+
+function runDFS() {
+  const src=+document.getElementById('dfsSrc').value;
+  const dst=+document.getElementById('dfsDst').value;
+  const adj=buildAdj(false);
+  const visited=new Set();
+  let found=false, pathFound=[];
+
+  function dfs(u, path) {
+    if(found) return;
+    visited.add(u); path=[...path,u];
+    if(u===dst) { found=true; pathFound=path; return; }
+    (adj[u]||[]).forEach(({to})=>{ if(!visited.has(to)) dfs(to,path); });
+  }
+  dfs(src,[]);
+
+  const el=document.getElementById('dfsResult');
+  el.style.display='block';
+  if(found) {
+    const names=pathFound.map(id=>{const n=nodes.find(x=>x.id===id);return n?n.name:'Node '+id;});
+    el.innerHTML=`<span style="color:var(--success)">✔ Reachable!</span><br><b>DFS Path:</b><br>${names.join(' → ')}`;
+  } else {
+    el.innerHTML=`<span style="color:var(--red)">✘ Not reachable from ${nodes.find(x=>x.id===src)?.name} to ${nodes.find(x=>x.id===dst)?.name}</span>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  GREEDY ALLOCATION
+// ═══════════════════════════════════════════════════════
+let allocResults=[];
+
+function runAllocation() {
+  // Clone stocks
+  const stocks={};
+  nodes.filter(n=>n.type==='bloodbank').forEach(n=>stocks[n.id]=n.stock);
+  const hosps=nodes.filter(n=>n.type==='hospital');
+  allocResults=[];
+
+  hosps.forEach(h => {
+    // Find blood banks with matching blood group, sorted by distance
+    const candidates=[];
+    roads.forEach(r=>{
+      const bb=nodes.find(n=>n.id===r.src&&n.type==='bloodbank');
+      const hh=nodes.find(n=>n.id===r.dst&&n.type==='hospital');
+      if(bb&&hh&&hh.id===h.id&&bb.bloodGroup===h.bloodGroup) candidates.push({bb,dist:r.dist});
+      const bb2=nodes.find(n=>n.id===r.dst&&n.type==='bloodbank');
+      const hh2=nodes.find(n=>n.id===r.src&&n.type==='hospital');
+      if(bb2&&hh2&&hh2.id===h.id&&bb2.bloodGroup===h.bloodGroup) candidates.push({bb:bb2,dist:r.dist});
+    });
+    candidates.sort((a,b)=>a.dist-b.dist);
+
+    let remaining=h.demand;
+    if(candidates.length===0) {
+      allocResults.push({bb:null,h,units:0,dist:0,status:'No Match'});
+      return;
+    }
+    for(const {bb,dist} of candidates) {
+      if(remaining<=0) break;
+      const avail=stocks[bb.id]||0;
+      const supply=Math.min(avail,remaining);
+      if(supply>0) {
+        stocks[bb.id]-=supply; remaining-=supply;
+        allocResults.push({bb,h,units:supply,dist,status:remaining<=0?'Fulfilled':'Partial'});
+      }
+    }
+    if(remaining>0) allocResults.push({bb:null,h,units:0,dist:0,status:'Insufficient Stock'});
+  });
+  allocDone=true;
+  renderAllocationLogs();
+}
+
+function renderAllocationLogs() {
+  const el=document.getElementById('allocLogs');
+  if(!allocDone) {
+    el.innerHTML=`<div class="card" style="text-align:center;padding:40px;color:var(--text-sub);">
+      <i data-lucide="zap" style="width:40px;height:40px;stroke:var(--gray-3);margin-bottom:12px;display:block;margin-left:auto;margin-right:auto;"></i>
+      <p>Press <b>Run Allocation</b> to execute the greedy algorithm</p>
+    </div>`;
+    lucide.createIcons(); return;
+  }
+  el.innerHTML=allocResults.map(a=>{
+    const sc=a.status==='Fulfilled'?'pill-green':a.status==='Partial'?'pill-amber':'pill-red';
+    return `<div class="alloc-item">
+      <div class="alloc-flow">
+        <span class="node-bb">${a.bb?a.bb.name:'—'}</span>
+        <span style="color:var(--gray-3)">→</span>
+        <span class="node-h">${a.h.name}</span>
+      </div>
+      <div class="alloc-meta">
+        <span>🩸 ${a.units} units</span>
+        <span>📍 ${a.dist} km</span>
+        <span><span class="pill ${sc}">${a.status}</span></span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+//  DSU ZONES
+// ═══════════════════════════════════════════════════════
+function computeZones() {
+  const n=nodes.length;
+  const par=nodes.map((_,i)=>i);
+  function find(x){return par[x]===x?x:par[x]=find(par[x]);}
+  function unite(a,b){par[find(a)]=find(b);}
+
+  const idToIdx={};
+  nodes.forEach((nd,i)=>idToIdx[nd.id]=i);
+
+  roads.forEach(r=>{
+    const a=idToIdx[r.src], b=idToIdx[r.dst];
+    if(a!==undefined&&b!==undefined) unite(a,b);
+  });
+
+  const groups={};
+  nodes.forEach((nd,i)=>{
+    const root=find(i);
+    if(!groups[root]) groups[root]=[];
+    groups[root].push(nd);
+  });
+
+  const container=document.getElementById('zonesContainer');
+  const zoneList=Object.values(groups);
+  container.innerHTML=zoneList.map((group,zi)=>`
+    <div class="zone-card">
+      <div class="zone-head" onclick="toggleZone(${zi})">
+        <h4>Zone ${zi+1} — ${group.length} Node${group.length>1?'s':''}</h4>
+        <i data-lucide="chevron-down" id="zone-chevron-${zi}"></i>
+      </div>
+      <div class="zone-body ${zi===0?'open':''}" id="zone-body-${zi}">
+        ${group.map(nd=>`<div class="zone-node">
+          <span>${nd.type==='bloodbank'?'🏦':'🏥'}</span>
+          <span><b>${nd.name}</b></span>
+          <span class="pill pill-red" style="margin-left:auto">${nd.bloodGroup}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+  `).join('');
+  lucide.createIcons();
+}
+
+function toggleZone(zi) {
+  const body=document.getElementById('zone-body-'+zi);
+  body.classList.toggle('open');
+}
+
+// ═══════════════════════════════════════════════════════
+//  FILE MANAGEMENT
+// ═══════════════════════════════════════════════════════
+function showFileStatus(id, msg, ok) {
+  const el=document.getElementById(id);
+  el.style.display='block';
+  el.style.background=ok?'#dcfce7':'#fce8ea';
+  el.style.color=ok?'#16a34a':'#c0152a';
+  el.textContent=msg;
+}
+
+function loadPeopleCSV(event) {
+  const file=event.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const lines=e.target.result.trim().split('\n').slice(1);
+    let added=0;
+    lines.forEach(line=>{
+      const [id,name,role,bloodGroup,units,phone,city]=line.split(',').map(s=>s.trim().replace(/\r/g,''));
+      if(role==='donor') {
+        if(!donors.find(d=>d.id===+id)) { donors.push({id:+id,name,bloodGroup,age:25,units:+units,phone,city}); added++; }
+      } else if(role==='patient') {
+        if(!patients.find(p=>p.id===+id)) { patients.push({id:+id,name,bloodGroup,units:+units,phone,city,hospital:'—',status:'Waiting'}); added++; }
+      }
+    });
+    showFileStatus('fs-people',`✔ Loaded ${added} records from ${file.name}`,true);
+    updateStats();
+  };
+  reader.readAsText(file);
+}
+
+function loadHospitalCSV(event) {
+  const file=event.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const lines=e.target.result.trim().split('\n').slice(1);
+    let added=0;
+    lines.forEach(line=>{
+      const [id,name,type,bloodGroup,stock,demand]=line.split(',').map(s=>s.trim().replace(/\r/g,''));
+      if(!nodes.find(n=>n.id===+id)) { nodes.push({id:+id,name,type,bloodGroup,stock:+stock,demand:+demand}); added++; }
+    });
+    showFileStatus('fs-hospitals',`✔ Loaded ${added} nodes from ${file.name}`,true);
+    updateStats();
+  };
+  reader.readAsText(file);
+}
+
+function savePeopleCSV() {
+  const all=[
+    ...donors.map(d=>`${d.id},${d.name},donor,${d.bloodGroup},${d.units},${d.phone},${d.city}`),
+    ...patients.map(p=>`${p.id},${p.name},patient,${p.bloodGroup},${p.units},${p.phone},${p.city}`),
+  ];
+  const csv='id,name,role,bloodGroup,units,phone,city\n'+all.join('\n');
+  downloadCSV(csv,'people.csv');
+  showFileStatus('fs-save-people','✔ people.csv downloaded successfully',true);
+}
+
+function saveHospitalCSV() {
+  const rows=nodes.map(n=>`${n.id},${n.name},${n.type},${n.bloodGroup},${n.stock},${n.demand}`);
+  const csv='id,name,type,bloodGroup,stock,demand\n'+rows.join('\n');
+  downloadCSV(csv,'hospitals.csv');
+  showFileStatus('fs-save-hospitals','✔ hospitals.csv downloaded successfully',true);
+}
+
+function downloadCSV(content, filename) {
+  const blob=new Blob([content],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=filename; a.click();
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  lucide.createIcons();
+  updateStats();
+  drawNetwork();
+});
+
+window.addEventListener('resize', () => {
+  if(document.getElementById('page-home').classList.contains('active')) drawNetwork();
+});
+</script>
+</body>
+</html>
