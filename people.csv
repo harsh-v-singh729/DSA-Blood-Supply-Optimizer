@@ -1,0 +1,11 @@
+id,name,role,bloodGroup,units,phone,city
+4,Arjun,donor,O+,6,9876543213,Jamshedpur
+1,Harsh,donor,A+,5,9876543210,Jamshedpur
+3,Priya,donor,B+,4,9876543212,Dhanbad
+8,Ravi,donor,O-,5,9876543217,Jamshedpur
+10,Suresh,donor,A-,3,9876543219,Bokaro
+6,Vikram,donor,AB+,3,9876543215,Patna
+2,Rahul,patient,O+,3,9876543211,Ranchi
+5,Sneha,patient,A+,2,9876543214,Bokaro
+7,Ananya,patient,B+,4,9876543216,Ranchi
+9,Meena,patient,AB+,1,9876543218,Dhanbad

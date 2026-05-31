@@ -1,0 +1,10 @@
+id,name,type,bloodGroup,stock,demand
+0,Jeevan Dhara Blood Bank,bloodbank,A+,50,0
+1,Raktdaan Seva Kendra,bloodbank,B+,30,0
+2,Sanjeevani Blood Bank,bloodbank,O+,40,0
+3,Jeevan Jyoti Blood Bank,bloodbank,AB+,20,0
+4,Apollo Hospitals Noida,hospital,A+,0,15
+5,Fortis Hospital Noida,hospital,B+,0,10
+6,Max Hospital,hospital,O+,0,20
+7,Yatharth Super Speciality Hospital,hospital,AB+,0,8
+8,Jaypee hospital,hospital,A+,0,12
